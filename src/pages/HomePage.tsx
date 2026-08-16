@@ -2,17 +2,13 @@ import { Link } from "react-router-dom"
 
 import { AthleteCarousel } from "@/components/AthleteCard"
 import { Container } from "@/components/Container"
-import { NewsCard } from "@/components/NewsCard"
 import { ResultCard } from "@/components/ResultCard"
 import { SectionHeading } from "@/components/SectionHeading"
 import { Button } from "@/components/ui/button"
 import { athletes } from "@/data/athletes"
-import { getLatestNews } from "@/data/news"
 import { competitions } from "@/data/results"
 
 const heroImage = "https://generationiron.com/wp-content/uploads/2026/04/2026-Worlds-Strongest-Man-Top-10.jpg"
-const latestNews = getLatestNews(4)
-const [featuredNews, ...moreNews] = latestNews
 const featuredAthletes = athletes.slice(0, 8)
 const recentMeets = competitions.slice(0, 3)
 
