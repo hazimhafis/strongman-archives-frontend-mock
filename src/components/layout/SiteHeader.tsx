@@ -15,8 +15,8 @@ import { cn } from "@/lib/utils"
 const navItems = [
   { to: "/", label: "Home", end: true },
   { to: "/athletes", label: "Athletes" },
-  { to: "/news", label: "News" },
   { to: "/results", label: "Results" },
+  { to: "/records", label: "Records" },
 ]
 
 function NavLinks() {
