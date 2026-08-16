@@ -2,6 +2,7 @@ import {
   unsplash,
   type Competition,
   type CompetitionStanding,
+  type UpcomingContest,
 } from "@/data/types"
 
 export const competitions: Competition[] = [
@@ -12,7 +13,7 @@ export const competitions: Competition[] = [
     date: "2026-05-16",
     year: 2026,
     series: "World's Strongest Man",
-    image: unsplash("photo-1461896836934-ffe607ba6851"),
+    image: unsplash("photo-1571902943202-507ec2618e8f"),
     standings: [
       { place: 1, athleteSlug: "tom-stoltman", points: 51.5 },
       { place: 2, athleteSlug: "mitchell-hooper", points: 50 },
@@ -145,8 +146,53 @@ export const competitions: Competition[] = [
   },
 ]
 
+export const upcomingContests: UpcomingContest[] = [
+  {
+    slug: "shaw-classic-2026",
+    name: "Shaw Classic 2026",
+    location: "Loveland, USA",
+    date: "2026-08-22",
+    year: 2026,
+    series: "Shaw Classic",
+    image: unsplash("photo-1558611848-73f7eb4001a1"),
+  },
+  {
+    slug: "giants-live-world-tour-finals-2026",
+    name: "Giants Live World Tour Finals 2026",
+    location: "Birmingham, England",
+    date: "2026-09-13",
+    year: 2026,
+    series: "Giants Live",
+    image: unsplash("photo-1540497077202-7c8a3999166f"),
+  },
+  {
+    slug: "rogue-invitational-2026",
+    name: "Rogue Invitational 2026",
+    location: "Aberdeen, Scotland",
+    date: "2026-10-25",
+    year: 2026,
+    series: "Rogue Invitational",
+    image: unsplash("photo-1517963879433-6ad2b556f593"),
+  },
+  {
+    slug: "arnold-2027",
+    name: "Arnold Strongman Classic 2027",
+    location: "Columbus, USA",
+    date: "2027-03-06",
+    year: 2027,
+    series: "Arnold",
+    image: unsplash("photo-1517649763962-0c623066013b"),
+  },
+]
+
 export function getCompetition(slug: string) {
   return competitions.find((competition) => competition.slug === slug)
+}
+
+export function getLatestCompetitions(limit = 3) {
+  return [...competitions]
+    .sort((a, b) => (a.date < b.date ? 1 : -1))
+    .slice(0, limit)
 }
 
 export function getAthleteResults(athleteSlug: string) {
