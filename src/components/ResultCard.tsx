@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { getAthlete } from "@/data/athletes"
+import { getContestCompetitor } from "@/data/contests"
 import type { Competition } from "@/data/types"
 import { formatDate, formatPlace } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -13,7 +13,13 @@ export function ResultCard({
   competition: Competition
   className?: string
 }) {
-  const champion = getAthlete(competition.standings[0]?.athleteSlug ?? "")
+  const championStanding = competition.standings[0]
+  const champion = championStanding
+    ? getContestCompetitor(
+        championStanding.athleteArchiveId,
+        championStanding.athleteName,
+      )
+    : null
 
   return (
     <Link
@@ -78,12 +84,14 @@ export function FeaturedResultCard({
         </p>
         <ol className="mt-8 grid gap-3 sm:grid-cols-3">
           {podium.map((standing) => {
-            const athlete = getAthlete(standing.athleteSlug)
-            if (!athlete) return null
+            const competitor = getContestCompetitor(
+              standing.athleteArchiveId,
+              standing.athleteName,
+            )
 
             return (
               <li
-                key={standing.athleteSlug}
+                key={`${standing.athleteArchiveId}-${standing.place}`}
                 className="flex items-center gap-3 rounded-lg bg-white/10 px-3 py-2.5 backdrop-blur-sm"
               >
                 <span className="w-8 shrink-0 text-label text-white/70">
@@ -91,19 +99,23 @@ export function FeaturedResultCard({
                 </span>
                 <Avatar>
                   <AvatarImage
-                    src={athlete.image}
+                    src={competitor.image}
                     alt=""
                     className="object-top"
                   />
-                  <AvatarFallback>{athlete.countryCode}</AvatarFallback>
+                  <AvatarFallback>
+                    {competitor.countryCode || competitor.name.slice(0, 2)}
+                  </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0">
                   <p className="truncate text-sm font-semibold text-white">
-                    {athlete.name}
+                    {competitor.name}
                   </p>
-                  <p className="text-caption text-white/70">
-                    {standing.points} pts
-                  </p>
+                  {standing.points != null ? (
+                    <p className="text-caption text-white/70">
+                      {standing.points} pts
+                    </p>
+                  ) : null}
                 </div>
               </li>
             )
