@@ -1,65 +1,67 @@
 import { Link } from "react-router-dom"
 
-import { AthleteCarousel } from "@/components/AthleteCard"
+import { AthleteHoverAccordion } from "@/components/AthleteHoverAccordion"
 import { Container } from "@/components/Container"
-import { ResultCard } from "@/components/ResultCard"
+import { FeaturedResultCard, ResultCard } from "@/components/ResultCard"
 import { SectionHeading } from "@/components/SectionHeading"
+import { UpcomingContestCard } from "@/components/UpcomingContestCard"
 import { Button } from "@/components/ui/button"
-import { athletes } from "@/data/athletes"
-import { competitions } from "@/data/results"
+import { getAthlete } from "@/data/athletes"
+import { getLatestCompetitions, upcomingContests } from "@/data/results"
+import type { Athlete } from "@/data/types"
 
-const heroImage = "https://generationiron.com/wp-content/uploads/2026/04/2026-Worlds-Strongest-Man-Top-10.jpg"
-const featuredAthletes = athletes.slice(0, 8)
-const recentMeets = competitions.slice(0, 3)
+const popularAthleteSlugs = [
+  "tom-stoltman",
+  "mitchell-hooper",
+  "hafthor-bjornsson",
+  "rayno-nel",
+  "eddie-hall",
+]
+
+const popularAthletes = popularAthleteSlugs
+  .map((slug) => getAthlete(slug))
+  .filter((athlete): athlete is Athlete => athlete != null)
 
 export function HomePage() {
+  const [latestMeet, ...recentMeets] = getLatestCompetitions(3)
+
   return (
     <div>
-      <section className="relative min-h-[68vh] overflow-hidden">
-        <img
-          src={heroImage}
-          alt=""
-          className="absolute inset-0 size-full object-cover"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-black/20" />
-        <Container className="relative flex min-h-[68vh] flex-col justify-end py-16">
-          <p className="text-overline text-white/80">Strongman Archives</p>
-          <h1 className="mt-4 max-w-3xl text-display text-white md:text-6xl md:leading-[1.05]">
-            The strongest men. The complete record.
-          </h1>
-          <p className="mt-5 max-w-xl text-body-lg text-white/75">
-		  	The most comprehensive strongman athlete database online. Search records, contest history, and world-title files across every era of the sport.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-3">
-            <Button size="lg" asChild>
-              <Link to="/athletes">Explore Athletes</Link>
-            </Button>
-            <Button
-              variant="outline"
-              size="lg"
-              className="border-white/30 bg-white/10 text-white hover:bg-white/20 hover:text-white"
-              asChild
-            >
-              <Link to="/results">View Results</Link>
-            </Button>
-          </div>
+      <section className="py-16">
+        <Container>
+          <SectionHeading
+            overline="Leaderboards"
+            title="Latest contest results"
+            action={
+              <Button variant="outline" asChild>
+                <Link to="/results">All Results</Link>
+              </Button>
+            }
+          />
+          {latestMeet ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2">
+              <FeaturedResultCard
+                competition={latestMeet}
+                className="md:col-span-2 lg:row-span-2"
+              />
+              {recentMeets.map((competition) => (
+                <ResultCard
+                  key={competition.slug}
+                  competition={competition}
+                  className="h-full min-h-[200px]"
+                />
+              ))}
+            </div>
+          ) : null}
         </Container>
       </section>
 
-      <section className="py-16">
+      <section className="bg-muted/50 py-16">
         <Container>
-          <div className="grid gap-10 border-t pt-10 md:grid-cols-3">
-            {[
-              { value: "47", label: "Years of WSM" },
-              { value: "12", label: "Featured athletes" },
-              { value: "6", label: "Championship files" },
-            ].map((stat) => (
-              <div key={stat.label}>
-                <p className="text-heading-lg text-foreground">{stat.value}</p>
-                <p className="mt-2 text-label text-muted-foreground">
-                  {stat.label}
-                </p>
-              </div>
+          <SectionHeading overline="Calendar" title="Upcoming contests" />
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {upcomingContests.map((contest) => (
+              <UpcomingContestCard key={contest.slug} contest={contest} />
             ))}
           </div>
         </Container>
@@ -69,33 +71,14 @@ export function HomePage() {
         <Container>
           <SectionHeading
             overline="Roster"
-            title="Athletes"
+            title="Popular athletes"
             action={
               <Button variant="outline" asChild>
                 <Link to="/athletes">Full Roster</Link>
               </Button>
             }
           />
-          <AthleteCarousel athletes={featuredAthletes} />
-        </Container>
-      </section>
-
-      <section className="py-16">
-        <Container>
-          <SectionHeading
-            overline="Leaderboards"
-            title="Recent results"
-            action={
-              <Button variant="outline" asChild>
-                <Link to="/results">All Results</Link>
-              </Button>
-            }
-          />
-          <div className="grid gap-4 md:grid-cols-3">
-            {recentMeets.map((competition) => (
-              <ResultCard key={competition.slug} competition={competition} />
-            ))}
-          </div>
+          <AthleteHoverAccordion athletes={popularAthletes} />
         </Container>
       </section>
     </div>
