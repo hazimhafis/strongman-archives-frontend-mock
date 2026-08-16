@@ -1,7 +1,6 @@
 import { Link, useParams } from "react-router-dom"
 
 import { Container } from "@/components/Container"
-import { NewsCard } from "@/components/NewsCard"
 import { SectionHeading } from "@/components/SectionHeading"
 import {
   Table,
@@ -13,7 +12,6 @@ import {
 } from "@/components/ui/table"
 import type { Athlete } from "@/data/types"
 import { getAthlete } from "@/data/athletes"
-import { news } from "@/data/news"
 import { getAthleteResults } from "@/data/results"
 import { dash } from "@/lib/archive"
 import { formatDate, formatPlace } from "@/lib/format"
@@ -29,9 +27,6 @@ export function AthleteDetailPage() {
   }
 
   const results = getAthleteResults(athlete.slug)
-  const relatedNews = news.filter((article) =>
-    article.relatedAthleteSlugs.includes(athlete.slug),
-  )
 
   return (
     <div>
@@ -78,7 +73,7 @@ export function AthleteDetailPage() {
                 ["Born", athlete.born || "—"],
                 ["Height", athlete.height || "—"],
                 ["Weight", athlete.weight || "—"],
-                ["Nation", athlete.country],
+                ["Nationality", athlete.country],
                 ["Active", athlete.activeYears],
                 ["Int'l contests", athlete.intlContests ?? "—"],
                 ["Int'l wins", athlete.intlWins ?? "—"],
@@ -136,19 +131,6 @@ export function AthleteDetailPage() {
           )}
         </Container>
       </section>
-
-      {relatedNews.length > 0 ? (
-        <section className="bg-muted/50 py-16">
-          <Container>
-            <SectionHeading overline="Dispatch" title="In the news" />
-            <div className="grid gap-6 md:grid-cols-3">
-              {relatedNews.map((article) => (
-                <NewsCard key={article.slug} article={article} />
-              ))}
-            </div>
-          </Container>
-        </section>
-      ) : null}
     </div>
   )
 }
@@ -210,17 +192,17 @@ function AthleteProfileHeader({ athlete }: { athlete: Athlete }) {
               alt=""
               className="size-7 shrink-0 rounded-full object-cover ring-1 ring-border"
             />
-            <span>
+            <span className="text-label text-muted-foreground">
               {athlete.country} • {division} • {athlete.activeYears}
             </span>
           </p>
         </div>
 
-        <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-3 border-t border-dashed pt-5 md:border-t-0 md:border-l md:border-dashed md:py-8 md:pl-6 md:pt-8 lg:gap-x-8 lg:pl-10">
+        <dl className="grid grid-cols-2 justify-items-center gap-x-6 gap-y-4 border-t border-dashed pt-5 text-center md:grid-cols-[auto_1fr] md:justify-items-start items-center md:border-t-0 md:border-l md:border-dashed md:py-8 md:pl-6 md:pt-8 md:text-left lg:gap-x-8 lg:pl-10">
           {facts.map(([label, value]) => (
-            <div key={label} className="contents">
+            <div key={label} className="flex flex-col items-center md:contents">
               <dt className="text-label text-muted-foreground">{label}</dt>
-              <dd className="text-[15px] font-semibold">{value}</dd>
+              <dd className="text-label font-semibold">{value}</dd>
             </div>
           ))}
         </dl>
