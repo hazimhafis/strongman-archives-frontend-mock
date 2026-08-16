@@ -1,9 +1,4 @@
-import {
-  createContext,
-  type ReactNode,
-  useContext,
-  useState,
-} from "react"
+import { createContext, type ReactNode, useState } from "react"
 import { Drawer as VaulHeader } from "vaul"
 
 import { useMediaQuery } from "@/hooks/useMediaQuery"
@@ -14,14 +9,6 @@ interface DrawerContextProps {
 }
 
 const DrawerContext = createContext<DrawerContextProps | undefined>(undefined)
-
-export function useHeaderDrawer() {
-  const context = useContext(DrawerContext)
-  if (!context) {
-    throw new Error("useHeaderDrawer must be used within a HeaderDrawer")
-  }
-  return context
-}
 
 interface HeaderDrawerProps {
   children: ReactNode
