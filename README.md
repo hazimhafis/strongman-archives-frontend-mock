@@ -21,12 +21,13 @@ Visual language follows the [Modern Minimal](https://shadcnstudio.com/r/themes/m
 | `/athletes/:slug` | Athlete file: portrait header, bio, personal bests, filed results, related news |
 | `/news`, `/news/:slug` | Dispatch list and article |
 | `/results`, `/results/:slug` | Championship files by year, plus standings and event winners |
+| `/records` | World's Strongest Man career marks and event records, filterable by implement |
 
 ## Data
 
-Mock data lives in `src/data/`. Athlete portraits and country flags are loaded from `strongmanarchives.com` via helpers in `src/lib/archive.ts`. A subset of the live directory is filed locally (men and women, plus richer extras for featured names). Directory hero stats (`4,000+` athletes) describe the real archive, not the local subset.
+Mock data lives in `src/data/`. Athlete portraits, country flags, and contest series images are loaded from `strongmanarchives.com` via helpers in `src/lib/archive.ts`. A subset of the live directory is filed locally (men and women, plus richer extras for featured names). Directory hero stats (`4,000+` athletes) describe the real archive, not the local subset.
 
-News copy and 2025–2026 meet results are fictional. News and results photography is from Unsplash.
+Contests are a single catalog in `src/data/contests.ts`, shaped like the archive spreadsheet: one row per meet, with standings and event winners when results have been filed. Homepage latest results, the upcoming calendar, year tabs, and athlete result histories are all queried from that catalog by date. Records in `src/data/records.ts` follow the live [records board](https://strongmanarchives.com/records.php): World's Strongest Man career marks plus event records grouped by implement. News copy is still fictional. News photography is from Unsplash.
 
 ## Scripts
 
