@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/table"
 import type { Athlete } from "@/data/types"
 import { getAthlete } from "@/data/athletes"
-import { getAthleteResults } from "@/data/results"
+import { getAthleteResults } from "@/data/contests"
 import { dash } from "@/lib/archive"
 import { formatDate, formatPlace } from "@/lib/format"
 
