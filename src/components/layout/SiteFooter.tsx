@@ -7,6 +7,7 @@ const footerLinks = [
   { to: "/athletes", label: "Athletes" },
   { to: "/news", label: "News" },
   { to: "/results", label: "Results" },
+  { to: "/records", label: "Records" },
 ]
 
 export function SiteFooter() {
