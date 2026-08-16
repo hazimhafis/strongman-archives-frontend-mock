@@ -2,72 +2,50 @@ import { Link } from "react-router-dom"
 
 import { AthleteHoverAccordion } from "@/components/AthleteHoverAccordion"
 import { Container } from "@/components/Container"
-import { FeaturedResultCard, ResultCard } from "@/components/ResultCard"
+import { ContestTable } from "@/components/ContestTable"
 import { SectionHeading } from "@/components/SectionHeading"
-import { UpcomingContestCard } from "@/components/UpcomingContestCard"
 import { Button } from "@/components/ui/button"
-import { getAthlete } from "@/data/athletes"
-import { getLatestCompetitions, upcomingContests } from "@/data/results"
-import type { Athlete } from "@/data/types"
-
-const popularAthleteSlugs = [
-  "tom-stoltman",
-  "mitchell-hooper",
-  "hafthor-bjornsson",
-  "rayno-nel",
-  "eddie-hall",
-]
-
-const popularAthletes = popularAthleteSlugs
-  .map((slug) => getAthlete(slug))
-  .filter((athlete): athlete is Athlete => athlete != null)
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import {
+  getLatestCompetitions,
+  getPopularAthletes,
+  getUpcomingContests,
+} from "@/data/contests"
 
 export function HomePage() {
-  const [latestMeet, ...recentMeets] = getLatestCompetitions(3)
+  const latestContests = getLatestCompetitions(10)
+  const upcomingContests = getUpcomingContests(10)
+  const popularAthletes = getPopularAthletes(5)
 
   return (
     <div>
       <section className="py-16">
         <Container>
           <SectionHeading
-            overline="Leaderboards"
-            title="Latest contest results"
+            overline="Contests"
+            title="Results & calendar"
             action={
               <Button variant="outline" asChild>
                 <Link to="/results">All Results</Link>
               </Button>
             }
           />
-          {latestMeet ? (
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 lg:grid-rows-2">
-              <FeaturedResultCard
-                competition={latestMeet}
-                className="md:col-span-2 lg:row-span-2"
-              />
-              {recentMeets.map((competition) => (
-                <ResultCard
-                  key={competition.slug}
-                  competition={competition}
-                  className="h-full min-h-[200px]"
-                />
-              ))}
-            </div>
-          ) : null}
+          <Tabs defaultValue="latest">
+            <TabsList variant="pill" className="mb-8">
+              <TabsTrigger value="latest">Latest results</TabsTrigger>
+              <TabsTrigger value="upcoming">Upcoming contests</TabsTrigger>
+            </TabsList>
+            <TabsContent value="latest">
+              <ContestTable contests={latestContests} showChampion />
+            </TabsContent>
+            <TabsContent value="upcoming">
+              <ContestTable contests={upcomingContests} />
+            </TabsContent>
+          </Tabs>
         </Container>
       </section>
 
       <section className="bg-muted/50 py-16">
-        <Container>
-          <SectionHeading overline="Calendar" title="Upcoming contests" />
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            {upcomingContests.map((contest) => (
-              <UpcomingContestCard key={contest.slug} contest={contest} />
-            ))}
-          </div>
-        </Container>
-      </section>
-
-      <section className="py-16">
         <Container>
           <SectionHeading
             overline="Roster"
