@@ -60,6 +60,8 @@ export type Competition = {
   events: CompetitionEvent[]
 }
 
+export type UpcomingContest = Omit<Competition, "standings" | "events">
+
 export function unsplash(id: string, width = 1400) {
   return `https://images.unsplash.com/${id}?auto=format&fit=crop&w=${width}&q=80`
 }
