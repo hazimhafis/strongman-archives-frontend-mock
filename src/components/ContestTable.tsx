@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom"
 
-import { getContestCompetitor } from "@/data/contests"
+import { LiveBadge } from "@/components/LiveBadge"
+import { getContestCompetitor, isLiveContest } from "@/data/contests"
 import type { Competition } from "@/data/types"
 import { formatDate } from "@/lib/format"
 import { cn } from "@/lib/utils"
@@ -66,12 +67,15 @@ export function ContestTable({
                   {formatDate(contest.date)}
                 </td>
                 <td className="border-b px-3 py-2.5">
-                  <Link
-                    to={`/results/${contest.slug}`}
-                    className="text-sm font-medium text-primary hover:underline"
-                  >
-                    {contest.name}
-                  </Link>
+                  <span className="inline-flex items-center gap-2">
+                    <Link
+                      to={`/results/${contest.slug}`}
+                      className="text-sm font-medium text-primary hover:underline"
+                    >
+                      {contest.name}
+                    </Link>
+                    {isLiveContest(contest) ? <LiveBadge /> : null}
+                  </span>
                 </td>
                 <td className="border-b px-3 py-2.5 text-sm text-muted-foreground">
                   {contest.division}
