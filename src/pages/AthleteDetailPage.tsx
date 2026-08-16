@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom"
 
 import { Container } from "@/components/Container"
+import { LiveBadge } from "@/components/LiveBadge"
 import { SectionHeading } from "@/components/SectionHeading"
 import {
   Table,
@@ -12,7 +13,7 @@ import {
 } from "@/components/ui/table"
 import type { Athlete } from "@/data/types"
 import { getAthlete } from "@/data/athletes"
-import { getAthleteResults } from "@/data/contests"
+import { getAthleteResults, isLiveContest } from "@/data/contests"
 import { dash } from "@/lib/archive"
 import { formatDate, formatPlace } from "@/lib/format"
 
@@ -110,12 +111,15 @@ export function AthleteDetailPage() {
                 {results.map(({ competition, standing }) => (
                   <TableRow key={competition.slug}>
                     <TableCell>
-                      <Link
-                        to={`/results/${competition.slug}`}
-                        className="text-body-md hover:text-primary"
-                      >
-                        {competition.name}
-                      </Link>
+                      <span className="inline-flex items-center gap-2">
+                        <Link
+                          to={`/results/${competition.slug}`}
+                          className="text-body-md hover:text-primary"
+                        >
+                          {competition.name}
+                        </Link>
+                        {isLiveContest(competition) ? <LiveBadge /> : null}
+                      </span>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {formatDate(competition.date)}

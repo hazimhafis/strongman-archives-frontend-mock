@@ -14,6 +14,7 @@ type ContestRow = {
   series: string
   division: string
   imageKey: string
+  live?: boolean
   standings?: Competition["standings"]
   events?: Competition["events"]
 }
@@ -39,6 +40,7 @@ function row(entry: ContestRow): Omit<Competition, "slug"> {
     division: entry.division,
     image: contestPhoto(entry.imageKey),
     imageThumb: contestPhoto(entry.imageKey, true),
+    live: entry.live,
     standings: entry.standings ?? [],
     events: entry.events ?? [],
   }
@@ -53,6 +55,7 @@ const catalog: ContestRow[] = [
     series: "Strongman Champions League",
     division: "Men's Open",
     imageKey: "SCL",
+    live: true,
     standings: [
       { place: 1, athleteArchiveId: 1087, athleteName: "Pavlo Kordiyaka", points: 53 },
       { place: 2, athleteArchiveId: 1245, athleteName: "Oskar Ziółkowski", points: 48 },
@@ -724,6 +727,10 @@ function todayIso(now = new Date()) {
 
 export function isCompletedContest(contest: Competition) {
   return contest.standings.length > 0
+}
+
+export function isLiveContest(contest: Competition) {
+  return contest.live === true
 }
 
 export function isUpcomingContest(contest: Competition, now = new Date()) {

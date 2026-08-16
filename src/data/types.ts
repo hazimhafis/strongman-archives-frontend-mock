@@ -61,6 +61,7 @@ export type Competition = {
   division: string
   image: string
   imageThumb: string
+  live?: boolean
   standings: CompetitionStanding[]
   events: CompetitionEvent[]
 }

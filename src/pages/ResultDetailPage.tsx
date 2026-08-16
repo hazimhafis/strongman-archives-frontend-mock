@@ -1,6 +1,7 @@
 import { Link, useParams } from "react-router-dom"
 
 import { Container } from "@/components/Container"
+import { LiveBadge } from "@/components/LiveBadge"
 import { SectionHeading } from "@/components/SectionHeading"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
@@ -14,6 +15,7 @@ import {
 import {
   getCompetition,
   getContestCompetitor,
+  isLiveContest,
   isUpcomingContest,
 } from "@/data/contests"
 import { dash } from "@/lib/archive"
@@ -30,6 +32,7 @@ export function ResultDetailPage() {
   }
 
   const upcoming = isUpcomingContest(competition)
+  const live = isLiveContest(competition)
 
   return (
     <div>
@@ -41,7 +44,10 @@ export function ResultDetailPage() {
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/50 to-black/25" />
         <Container className="relative flex min-h-[420px] flex-col justify-end py-12">
-          <p className="text-overline text-white/80">{competition.series}</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-overline text-white/80">{competition.series}</p>
+            {live ? <LiveBadge /> : null}
+          </div>
           <h1 className="mt-3 text-display text-white">{competition.name}</h1>
           <p className="mt-4 text-body-lg text-white/75">
             {competition.location} · {formatDate(competition.date)}
@@ -63,7 +69,10 @@ export function ResultDetailPage() {
       ) : (
         <section className="py-16">
           <Container>
-            <SectionHeading overline="Final" title="Standings" />
+            <SectionHeading
+              overline={live ? "Live" : "Final"}
+              title={live ? "Live standings" : "Standings"}
+            />
             <Table>
               <TableHeader>
                 <TableRow>
