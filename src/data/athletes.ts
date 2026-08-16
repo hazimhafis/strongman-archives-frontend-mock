@@ -1066,3 +1066,7 @@ export const directoryStats = {
 export function getAthlete(slug: string) {
   return athletes.find((athlete) => athlete.slug === slug)
 }
+
+export function getAthleteByArchiveId(archiveId: number) {
+  return athletes.find((athlete) => athlete.archiveId === archiveId)
+}

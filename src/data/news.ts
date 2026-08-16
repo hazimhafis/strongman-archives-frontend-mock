@@ -135,8 +135,10 @@ export function getArticle(slug: string) {
   return news.find((article) => article.slug === slug)
 }
 
+export function getNews() {
+  return [...news].sort((a, b) => (a.date < b.date ? 1 : -1))
+}
+
 export function getLatestNews(limit = 6) {
-  return [...news]
-    .sort((a, b) => (a.date < b.date ? 1 : -1))
-    .slice(0, limit)
+  return getNews().slice(0, limit)
 }
