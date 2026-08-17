@@ -18,20 +18,9 @@ import {
   type EventRecordCategoryId,
 } from "@/data/records"
 
-const pageSizes = [10, 25, 50, 100]
-
 export function RecordsPage() {
   const [category, setCategory] = useState<EventRecordCategoryId>("all")
-  const [pageSize, setPageSize] = useState(25)
-  const [page, setPage] = useState(1)
-
   const filtered = useMemo(() => getEventRecords(category), [category])
-  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
-  const currentPage = Math.min(page, pageCount)
-  const paged = filtered.slice(
-    (currentPage - 1) * pageSize,
-    currentPage * pageSize,
-  )
 
   return (
     <div>
@@ -48,63 +37,22 @@ export function RecordsPage() {
       <section className="bg-muted/50 py-16">
         <Container>
           <SectionHeading overline="Implements" title="Event records" />
-          <div className="mb-4 flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
-            <FilterSelect
-              value={category}
-              onChange={(value) => {
-                setCategory(value as EventRecordCategoryId)
-                setPage(1)
-              }}
-              options={eventRecordCategories.map((item) => ({
-                value: item.id,
-                label: item.label,
-              }))}
-            />
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Show</span>
+          <RecordTable
+            records={filtered}
+            paginate
+            toolbar={
               <FilterSelect
-                value={String(pageSize)}
-                onChange={(value) => {
-                  setPageSize(Number(value))
-                  setPage(1)
-                }}
-                options={pageSizes.map((size) => ({
-                  value: String(size),
-                  label: String(size),
+                value={category}
+                onChange={(value) =>
+                  setCategory(value as EventRecordCategoryId)
+                }
+                options={eventRecordCategories.map((item) => ({
+                  value: item.id,
+                  label: item.label,
                 }))}
               />
-              <span>entries</span>
-            </div>
-          </div>
-          <RecordTable records={paged} />
-          <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-            <p>
-              Showing {(currentPage - 1) * pageSize + (paged.length ? 1 : 0)} to{" "}
-              {(currentPage - 1) * pageSize + paged.length} of {filtered.length}{" "}
-              entries
-            </p>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                disabled={currentPage === 1}
-                onClick={() => setPage((value) => Math.max(1, value - 1))}
-                className="rounded-md px-3 py-1.5 hover:bg-muted disabled:opacity-40"
-              >
-                Previous
-              </button>
-              <span className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground">
-                {currentPage}
-              </span>
-              <button
-                type="button"
-                disabled={currentPage === pageCount}
-                onClick={() => setPage((value) => Math.min(pageCount, value + 1))}
-                className="rounded-md px-3 py-1.5 hover:bg-muted disabled:opacity-40"
-              >
-                Next
-              </button>
-            </div>
-          </div>
+            }
+          />
         </Container>
       </section>
     </div>

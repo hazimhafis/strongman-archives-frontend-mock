@@ -1,10 +1,112 @@
+import { useMemo } from "react"
 import { Link } from "react-router-dom"
 
 import { LiveBadge } from "@/components/LiveBadge"
+import {
+  createDataTableHelper,
+  DataTable,
+  useDataTable,
+} from "@/components/ui/table"
 import { getContestCompetitor, isLiveContest } from "@/data/contests"
 import type { Competition } from "@/data/types"
 import { formatDate } from "@/lib/format"
 import { cn } from "@/lib/utils"
+
+const helper = createDataTableHelper<Competition>()
+
+const imageColumn = helper.display({
+  id: "image",
+  header: "",
+  cell: ({ row }) => (
+    <img
+      src={row.original.imageThumb}
+      alt=""
+      className={cn(
+        "h-10 w-[60px] rounded-sm object-cover ring-1 ring-foreground/8",
+      )}
+    />
+  ),
+  meta: { headerClassName: "w-16" },
+})
+
+const dateColumn = helper.accessor("date", {
+  header: "Date",
+  cell: ({ getValue }) => (
+    <span className="text-sm whitespace-nowrap text-muted-foreground">
+      {formatDate(getValue())}
+    </span>
+  ),
+})
+
+const contestColumn = helper.accessor("name", {
+  header: "Contest",
+  cell: ({ row }) => (
+    <span className="inline-flex items-center gap-2">
+      <Link
+        to={`/results/${row.original.slug}`}
+        className="text-sm font-medium text-primary hover:underline"
+      >
+        {row.original.name}
+      </Link>
+      {isLiveContest(row.original) ? <LiveBadge /> : null}
+    </span>
+  ),
+})
+
+const divisionColumn = helper.accessor("division", {
+  header: "Division",
+  cell: ({ getValue }) => (
+    <span className="text-sm text-muted-foreground">{getValue()}</span>
+  ),
+})
+
+const locationColumn = helper.accessor("location", {
+  header: "Location",
+  cell: ({ getValue }) => (
+    <span className="text-sm text-muted-foreground">{getValue()}</span>
+  ),
+})
+
+const championColumn = helper.display({
+  id: "champion",
+  header: "Champion",
+  cell: ({ row }) => {
+    const championStanding = row.original.standings[0]
+    const champion = championStanding
+      ? getContestCompetitor(
+          championStanding.athleteArchiveId,
+          championStanding.athleteName,
+        )
+      : null
+
+    if (champion?.slug) {
+      return (
+        <Link
+          to={`/athletes/${champion.slug}`}
+          className="text-sm font-medium text-primary hover:underline"
+        >
+          {champion.name}
+        </Link>
+      )
+    }
+
+    return (
+      <span className="text-sm text-muted-foreground">
+        {champion?.name ?? "—"}
+      </span>
+    )
+  },
+})
+
+const baseColumns = helper.columns([
+  imageColumn,
+  dateColumn,
+  contestColumn,
+  divisionColumn,
+  locationColumn,
+])
+
+const championColumns = helper.columns([...baseColumns, championColumn])
 
 export function ContestTable({
   contests,
@@ -13,97 +115,15 @@ export function ContestTable({
   contests: Competition[]
   showChampion?: boolean
 }) {
-  return (
-    <div className="overflow-x-auto rounded-xl bg-background ring-1 ring-foreground/8">
-      <table className="w-full min-w-[720px] border-separate border-spacing-0 text-left">
-        <thead>
-          <tr className="bg-muted">
-            <th className="w-16 px-3 py-3 first:rounded-tl-xl" />
-            <th className="px-3 py-3 text-label text-muted-foreground">Date</th>
-            <th className="px-3 py-3 text-label text-muted-foreground">
-              Contest
-            </th>
-            <th className="px-3 py-3 text-label text-muted-foreground">
-              Division
-            </th>
-            <th
-              className={
-                showChampion
-                  ? "px-3 py-3 text-label text-muted-foreground"
-                  : "px-3 py-3 text-label text-muted-foreground last:rounded-tr-xl"
-              }
-            >
-              Location
-            </th>
-            {showChampion ? (
-              <th className="px-3 py-3 text-label text-muted-foreground last:rounded-tr-xl">
-                Champion
-              </th>
-            ) : null}
-          </tr>
-        </thead>
-        <tbody>
-          {contests.map((contest) => {
-            const championStanding = contest.standings[0]
-            const champion = championStanding
-              ? getContestCompetitor(
-                  championStanding.athleteArchiveId,
-                  championStanding.athleteName,
-                )
-              : null
-
-            return (
-              <tr key={contest.slug} className="hover:bg-muted/60">
-                <td className="border-b px-3 py-2.5">
-                  <img
-                    src={contest.imageThumb}
-                    alt=""
-                    className={cn(
-                      "h-10 w-[60px] rounded-sm object-cover ring-1 ring-foreground/8",
-                    )}
-                  />
-                </td>
-                <td className="border-b px-3 py-2.5 text-sm whitespace-nowrap text-muted-foreground">
-                  {formatDate(contest.date)}
-                </td>
-                <td className="border-b px-3 py-2.5">
-                  <span className="inline-flex items-center gap-2">
-                    <Link
-                      to={`/results/${contest.slug}`}
-                      className="text-sm font-medium text-primary hover:underline"
-                    >
-                      {contest.name}
-                    </Link>
-                    {isLiveContest(contest) ? <LiveBadge /> : null}
-                  </span>
-                </td>
-                <td className="border-b px-3 py-2.5 text-sm text-muted-foreground">
-                  {contest.division}
-                </td>
-                <td className="border-b px-3 py-2.5 text-sm text-muted-foreground">
-                  {contest.location}
-                </td>
-                {showChampion ? (
-                  <td className="border-b px-3 py-2.5 text-sm">
-                    {champion?.slug ? (
-                      <Link
-                        to={`/athletes/${champion.slug}`}
-                        className="font-medium text-primary hover:underline"
-                      >
-                        {champion.name}
-                      </Link>
-                    ) : (
-                      <span className="text-muted-foreground">
-                        {champion?.name ?? "—"}
-                      </span>
-                    )}
-                  </td>
-                ) : null}
-              </tr>
-            )
-          })}
-        </tbody>
-      </table>
-    </div>
+  const columns = useMemo(
+    () => (showChampion ? championColumns : baseColumns),
+    [showChampion],
   )
+  const table = useDataTable({
+    columns,
+    data: contests,
+    getRowId: (contest) => contest.slug,
+  })
+
+  return <DataTable table={table} variant="archive" minWidth={720} />
 }

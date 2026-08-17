@@ -4,20 +4,76 @@ import { Container } from "@/components/Container"
 import { LiveBadge } from "@/components/LiveBadge"
 import { SectionHeading } from "@/components/SectionHeading"
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
+  createDataTableHelper,
+  DataTable,
+  useDataTable,
 } from "@/components/ui/table"
-import type { Athlete } from "@/data/types"
+import type { Athlete, Competition, CompetitionStanding } from "@/data/types"
 import { getAthlete } from "@/data/athletes"
 import { getAthleteResults, isLiveContest } from "@/data/contests"
 import { dash } from "@/lib/archive"
 import { formatDate, formatPlace } from "@/lib/format"
 
 import { NotFoundPage } from "@/pages/NotFoundPage"
+
+type PersonalBest = Athlete["personalBests"][number]
+type AthleteResult = {
+  competition: Competition
+  standing: CompetitionStanding
+}
+
+const personalBestHelper = createDataTableHelper<PersonalBest>()
+const personalBestColumns = personalBestHelper.columns([
+  personalBestHelper.accessor("event", {
+    header: "Event",
+    cell: ({ getValue }) => (
+      <span className="text-body-md">{getValue()}</span>
+    ),
+  }),
+  personalBestHelper.accessor("mark", {
+    header: "Mark",
+    cell: ({ getValue }) => (
+      <span className="text-muted-foreground">{getValue()}</span>
+    ),
+  }),
+])
+
+const resultHelper = createDataTableHelper<AthleteResult>()
+const resultColumns = resultHelper.columns([
+  resultHelper.accessor((row) => row.competition.name, {
+    id: "meet",
+    header: "Meet",
+    cell: ({ row }) => (
+      <span className="inline-flex items-center gap-2">
+        <Link
+          to={`/results/${row.original.competition.slug}`}
+          className="text-body-md hover:text-primary"
+        >
+          {row.original.competition.name}
+        </Link>
+        {isLiveContest(row.original.competition) ? <LiveBadge /> : null}
+      </span>
+    ),
+  }),
+  resultHelper.accessor((row) => row.competition.date, {
+    id: "date",
+    header: "Date",
+    cell: ({ getValue }) => (
+      <span className="text-muted-foreground">{formatDate(getValue())}</span>
+    ),
+  }),
+  resultHelper.accessor((row) => row.standing.place, {
+    id: "place",
+    header: "Place",
+    cell: ({ getValue }) => (
+      <span className="text-primary">{formatPlace(getValue())}</span>
+    ),
+  }),
+  resultHelper.accessor((row) => row.standing.points, {
+    id: "points",
+    header: "Points",
+  }),
+])
 
 export function AthleteDetailPage() {
   const { slug } = useParams()
@@ -44,26 +100,7 @@ export function AthleteDetailPage() {
                   No personal bests filed yet.
                 </p>
               ) : (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Event</TableHead>
-                      <TableHead>Mark</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {athlete.personalBests.map((best) => (
-                      <TableRow key={best.event}>
-                        <TableCell className="text-body-md">
-                          {best.event}
-                        </TableCell>
-                        <TableCell className="text-muted-foreground">
-                          {best.mark}
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
+                <PersonalBestsTable bests={athlete.personalBests} />
               )}
             </div>
           </div>
@@ -98,45 +135,32 @@ export function AthleteDetailPage() {
               No filed results yet.
             </p>
           ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Meet</TableHead>
-                  <TableHead>Date</TableHead>
-                  <TableHead>Place</TableHead>
-                  <TableHead>Points</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {results.map(({ competition, standing }) => (
-                  <TableRow key={competition.slug}>
-                    <TableCell>
-                      <span className="inline-flex items-center gap-2">
-                        <Link
-                          to={`/results/${competition.slug}`}
-                          className="text-body-md hover:text-primary"
-                        >
-                          {competition.name}
-                        </Link>
-                        {isLiveContest(competition) ? <LiveBadge /> : null}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
-                      {formatDate(competition.date)}
-                    </TableCell>
-                    <TableCell className="text-primary">
-                      {formatPlace(standing.place)}
-                    </TableCell>
-                    <TableCell>{standing.points}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
+            <AthleteResultsTable results={results} />
           )}
         </Container>
       </section>
     </div>
   )
+}
+
+function PersonalBestsTable({ bests }: { bests: PersonalBest[] }) {
+  const table = useDataTable({
+    columns: personalBestColumns,
+    data: bests,
+    getRowId: (best) => best.event,
+  })
+
+  return <DataTable table={table} />
+}
+
+function AthleteResultsTable({ results }: { results: AthleteResult[] }) {
+  const table = useDataTable({
+    columns: resultColumns,
+    data: results,
+    getRowId: (result) => result.competition.slug,
+  })
+
+  return <DataTable table={table} />
 }
 
 function AthleteProfileHeader({ athlete }: { athlete: Athlete }) {

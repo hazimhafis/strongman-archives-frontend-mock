@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react"
-import { ArrowUp, ChevronDown, Search } from "lucide-react"
+import { ChevronDown, Search } from "lucide-react"
 import { Link } from "react-router-dom"
 
 import { DirectoryHeroMark } from "@/components/DirectoryHeroMark"
@@ -10,21 +10,19 @@ import {
   DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  createDataTableHelper,
+  DataTable,
+  DataTablePageSize,
+  DataTablePagination,
+  useDataTable,
+} from "@/components/ui/table"
 import { athletes, directoryStats } from "@/data/athletes"
+import type { Athlete } from "@/data/types"
 import { dash } from "@/lib/archive"
 import { cn } from "@/lib/utils"
 
 type Tab = "all" | "men" | "women" | "champions"
-type SortKey =
-  | "lastName"
-  | "firstName"
-  | "country"
-  | "activeYears"
-  | "height"
-  | "weight"
-  | "intlContests"
-  | "intlWins"
-  | "worldApps"
 
 const tabs: { id: Tab; label: string }[] = [
   { id: "all", label: "All Athletes" },
@@ -33,16 +31,116 @@ const tabs: { id: Tab; label: string }[] = [
   { id: "champions", label: "World Champions" },
 ]
 
-const pageSizes = [10, 25, 50, 100]
+const helper = createDataTableHelper<Athlete>()
+
+const columns = helper.columns([
+  helper.accessor("firstName", {
+    header: "First Name",
+    enableGlobalFilter: true,
+    cell: ({ row }) => (
+      <Link
+        to={`/athletes/${row.original.slug}`}
+        className="text-sm font-medium text-primary hover:underline"
+      >
+        {row.original.firstName}
+      </Link>
+    ),
+  }),
+  helper.accessor("lastName", {
+    header: "Last Name",
+    enableGlobalFilter: true,
+    cell: ({ row }) => (
+      <Link
+        to={`/athletes/${row.original.slug}`}
+        className="text-sm font-medium text-primary hover:underline"
+      >
+        {row.original.lastName}
+      </Link>
+    ),
+  }),
+  helper.accessor("country", {
+    header: "Country",
+    enableGlobalFilter: false,
+    filterFn: "equalsString",
+    sortDescFirst: true,
+    cell: ({ row }) => (
+      <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+        <img
+          src={row.original.flagUrl}
+          alt=""
+          className="h-[13px] w-5 rounded-[1px] object-cover"
+        />
+        {row.original.countryCode}
+      </span>
+    ),
+  }),
+  helper.accessor("activeYears", {
+    header: "Active Years",
+    enableGlobalFilter: false,
+    sortDescFirst: true,
+    cell: ({ getValue }) => (
+      <span className="text-sm text-muted-foreground">{getValue()}</span>
+    ),
+  }),
+  helper.accessor((row) => parseHeight(row.height), {
+    id: "height",
+    header: "Height",
+    enableGlobalFilter: false,
+    sortDescFirst: true,
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {dash(row.original.height)}
+      </span>
+    ),
+  }),
+  helper.accessor((row) => parseWeight(row.weight), {
+    id: "weight",
+    header: "Weight",
+    enableGlobalFilter: false,
+    sortDescFirst: true,
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {dash(row.original.weight)}
+      </span>
+    ),
+  }),
+  helper.accessor((row) => row.intlContests ?? -1, {
+    id: "intlContests",
+    header: "Int'l Contests",
+    enableGlobalFilter: false,
+    sortDescFirst: true,
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {dash(row.original.intlContests)}
+      </span>
+    ),
+  }),
+  helper.accessor((row) => row.intlWins ?? -1, {
+    id: "intlWins",
+    header: "Int'l Wins",
+    enableGlobalFilter: false,
+    sortDescFirst: true,
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {dash(row.original.intlWins)}
+      </span>
+    ),
+  }),
+  helper.accessor((row) => row.worldApps ?? -1, {
+    id: "worldApps",
+    header: "World Appearances",
+    enableGlobalFilter: false,
+    sortDescFirst: true,
+    cell: ({ row }) => (
+      <span className="text-sm text-muted-foreground">
+        {dash(row.original.worldApps)}
+      </span>
+    ),
+  }),
+])
 
 export function AthletesPage() {
   const [tab, setTab] = useState<Tab>("men")
-  const [query, setQuery] = useState("")
-  const [country, setCountry] = useState("all")
-  const [pageSize, setPageSize] = useState(25)
-  const [page, setPage] = useState(1)
-  const [sortKey, setSortKey] = useState<SortKey>("lastName")
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("asc")
 
   const countries = useMemo(
     () =>
@@ -52,57 +150,43 @@ export function AthletesPage() {
     [],
   )
 
-  const filtered = useMemo(() => {
-    const needle = query.trim().toLowerCase()
-    const rows = athletes.filter((athlete) => {
-      const matchesTab =
-        tab === "all" ||
-        (tab === "men" && athlete.gender === "men") ||
-        (tab === "women" && athlete.gender === "women") ||
-        (tab === "champions" && athlete.worldWins > 0)
-      const matchesCountry = country === "all" || athlete.country === country
-      const matchesQuery =
-        needle.length === 0 ||
+  const tabbedAthletes = useMemo(
+    () =>
+      athletes.filter((athlete) => {
+        if (tab === "all") return true
+        if (tab === "men") return athlete.gender === "men"
+        if (tab === "women") return athlete.gender === "women"
+        return athlete.worldWins > 0
+      }),
+    [tab],
+  )
+
+  const table = useDataTable({
+    columns,
+    data: tabbedAthletes,
+    getRowId: (athlete) => athlete.slug,
+    enableSorting: true,
+    getColumnCanGlobalFilter: (column) =>
+      column.id === "firstName" || column.id === "lastName",
+    globalFilterFn: (row, _columnId, filterValue) => {
+      const needle = String(filterValue).trim().toLowerCase()
+      if (!needle) return true
+      const athlete = row.original
+      return (
         athlete.firstName.toLowerCase().includes(needle) ||
         athlete.lastName.toLowerCase().includes(needle) ||
         athlete.name.toLowerCase().includes(needle)
-      return matchesTab && matchesCountry && matchesQuery
-    })
+      )
+    },
+    initialState: {
+      sorting: [{ id: "lastName", desc: false }],
+      pagination: { pageSize: 25 },
+    },
+  })
 
-    rows.sort((a, b) => {
-      const direction = sortDir === "asc" ? 1 : -1
-      if (sortKey === "height") {
-        return (parseHeight(a.height) - parseHeight(b.height)) * direction
-      }
-      if (sortKey === "weight") {
-        return (parseWeight(a.weight) - parseWeight(b.weight)) * direction
-      }
-      if (sortKey === "intlContests" || sortKey === "intlWins" || sortKey === "worldApps") {
-        return ((a[sortKey] ?? -1) - (b[sortKey] ?? -1)) * direction
-      }
-      return a[sortKey].localeCompare(b[sortKey]) * direction
-    })
-
-    return rows
-  }, [country, query, sortDir, sortKey, tab])
-
-  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize))
-  const currentPage = Math.min(page, pageCount)
-  const paged = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize)
-
-  function toggleSort(key: SortKey) {
-    if (sortKey === key) {
-      setSortDir((dir) => (dir === "asc" ? "desc" : "asc"))
-      return
-    }
-    setSortKey(key)
-    setSortDir(key === "lastName" || key === "firstName" ? "asc" : "desc")
-  }
-
-  function updateTab(next: Tab) {
-    setTab(next)
-    setPage(1)
-  }
+  const countryFilter =
+    (table.getColumn("country")?.getFilterValue() as string | undefined) ??
+    "all"
 
   return (
     <section className="py-8 md:py-10">
@@ -146,7 +230,7 @@ export function AthletesPage() {
             <button
               key={item.id}
               type="button"
-              onClick={() => updateTab(item.id)}
+              onClick={() => setTab(item.id)}
               className={cn(
                 "relative shrink-0 py-3 text-sm font-medium transition-colors",
                 tab === item.id
@@ -166,186 +250,34 @@ export function AthletesPage() {
           <label className="relative min-w-0 flex-1">
             <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" />
             <input
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value)
-                setPage(1)
-              }}
+              value={table.state.globalFilter ?? ""}
+              onChange={(event) => table.setGlobalFilter(event.target.value)}
               placeholder="Search by name..."
               className="h-11 w-full rounded-lg border-0 bg-muted pr-4 pl-10 text-sm outline-none placeholder:text-muted-foreground focus-visible:ring-3 focus-visible:ring-ring/50"
             />
           </label>
           <div className="flex flex-wrap items-center gap-3">
             <FilterSelect
-              value={country}
-              onChange={(value) => {
-                setCountry(value)
-                setPage(1)
-              }}
+              value={countryFilter}
+              onChange={(value) =>
+                table
+                  .getColumn("country")
+                  ?.setFilterValue(value === "all" ? undefined : value)
+              }
               options={[
                 { value: "all", label: "All Countries" },
                 ...countries.map((item) => ({ value: item, label: item })),
               ]}
             />
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <span>Show</span>
-              <FilterSelect
-                value={String(pageSize)}
-                onChange={(value) => {
-                  setPageSize(Number(value))
-                  setPage(1)
-                }}
-                options={pageSizes.map((size) => ({
-                  value: String(size),
-                  label: String(size),
-                }))}
-              />
-              <span>entries</span>
-            </div>
+            <DataTablePageSize table={table} />
           </div>
         </div>
 
-        <div className="mt-4 overflow-x-auto">
-          <table className="w-full min-w-[920px] border-separate border-spacing-0 text-left">
-            <thead>
-              <tr className="bg-muted">
-                <SortHead
-                  label="First Name"
-                  active={sortKey === "firstName"}
-                  direction={sortDir}
-                  onClick={() => toggleSort("firstName")}
-                />
-                <SortHead
-                  label="Last Name"
-                  active={sortKey === "lastName"}
-                  direction={sortDir}
-                  onClick={() => toggleSort("lastName")}
-                />
-                <SortHead
-                  label="Country"
-                  active={sortKey === "country"}
-                  direction={sortDir}
-                  onClick={() => toggleSort("country")}
-                />
-                <SortHead
-                  label="Active Years"
-                  active={sortKey === "activeYears"}
-                  direction={sortDir}
-                  onClick={() => toggleSort("activeYears")}
-                />
-                <SortHead
-                  label="Height"
-                  active={sortKey === "height"}
-                  direction={sortDir}
-                  onClick={() => toggleSort("height")}
-                />
-                <SortHead
-                  label="Weight"
-                  active={sortKey === "weight"}
-                  direction={sortDir}
-                  onClick={() => toggleSort("weight")}
-                />
-                <SortHead
-                  label="Int'l Contests"
-                  active={sortKey === "intlContests"}
-                  direction={sortDir}
-                  onClick={() => toggleSort("intlContests")}
-                />
-                <SortHead
-                  label="Int'l Wins"
-                  active={sortKey === "intlWins"}
-                  direction={sortDir}
-                  onClick={() => toggleSort("intlWins")}
-                />
-                <SortHead
-                  label="World Appearances"
-                  active={sortKey === "worldApps"}
-                  direction={sortDir}
-                  onClick={() => toggleSort("worldApps")}
-                />
-              </tr>
-            </thead>
-            <tbody>
-              {paged.map((athlete) => (
-                <tr key={athlete.slug}>
-                  <td className="border-b px-3 py-3.5">
-                    <Link
-                      to={`/athletes/${athlete.slug}`}
-                      className="text-sm font-medium text-primary hover:underline"
-                    >
-                      {athlete.firstName}
-                    </Link>
-                  </td>
-                  <td className="border-b px-3 py-3.5">
-                    <Link
-                      to={`/athletes/${athlete.slug}`}
-                      className="text-sm font-medium text-primary hover:underline"
-                    >
-                      {athlete.lastName}
-                    </Link>
-                  </td>
-                  <td className="border-b px-3 py-3.5">
-                    <span className="inline-flex items-center gap-2 text-sm text-muted-foreground">
-                      <img
-                        src={athlete.flagUrl}
-                        alt=""
-                        className="h-[13px] w-5 rounded-[1px] object-cover"
-                      />
-                      {athlete.countryCode}
-                    </span>
-                  </td>
-                  <td className="border-b px-3 py-3.5 text-sm text-muted-foreground">
-                    {athlete.activeYears}
-                  </td>
-                  <td className="border-b px-3 py-3.5 text-sm text-muted-foreground">
-                    {dash(athlete.height)}
-                  </td>
-                  <td className="border-b px-3 py-3.5 text-sm text-muted-foreground">
-                    {dash(athlete.weight)}
-                  </td>
-                  <td className="border-b px-3 py-3.5 text-sm text-muted-foreground">
-                    {dash(athlete.intlContests)}
-                  </td>
-                  <td className="border-b px-3 py-3.5 text-sm text-muted-foreground">
-                    {dash(athlete.intlWins)}
-                  </td>
-                  <td className="border-b px-3 py-3.5 text-sm text-muted-foreground">
-                    {dash(athlete.worldApps)}
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+        <div className="mt-4">
+          <DataTable table={table} variant="plain" minWidth={920} />
         </div>
 
-        <div className="mt-4 flex flex-col gap-3 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
-          <p>
-            Showing {(currentPage - 1) * pageSize + (paged.length ? 1 : 0)} to{" "}
-            {(currentPage - 1) * pageSize + paged.length} of {filtered.length}{" "}
-            entries
-          </p>
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              disabled={currentPage === 1}
-              onClick={() => setPage((value) => Math.max(1, value - 1))}
-              className="rounded-md px-3 py-1.5 hover:bg-muted disabled:opacity-40"
-            >
-              Previous
-            </button>
-            <span className="rounded-md bg-primary px-3 py-1.5 text-primary-foreground">
-              {currentPage}
-            </span>
-            <button
-              type="button"
-              disabled={currentPage === pageCount}
-              onClick={() => setPage((value) => Math.min(pageCount, value + 1))}
-              className="rounded-md px-3 py-1.5 hover:bg-muted disabled:opacity-40"
-            >
-              Next
-            </button>
-          </div>
-        </div>
+        <DataTablePagination table={table} />
       </div>
     </section>
   )
@@ -361,37 +293,6 @@ function parseWeight(value: string) {
   const match = value.match(/^(\d+)/)
   if (!match) return -1
   return Number(match[1])
-}
-
-function SortHead({
-  label,
-  active,
-  direction,
-  onClick,
-}: {
-  label: string
-  active: boolean
-  direction: "asc" | "desc"
-  onClick: () => void
-}) {
-  return (
-    <th className="px-3 py-3">
-      <button
-        type="button"
-        onClick={onClick}
-        className="inline-flex items-center gap-1 text-label text-muted-foreground"
-      >
-        {label}
-        <ArrowUp
-          className={cn(
-            "size-3 transition-transform",
-            active ? "text-primary" : "opacity-0",
-            direction === "desc" && "rotate-180",
-          )}
-        />
-      </button>
-    </th>
-  )
 }
 
 function FilterSelect({
