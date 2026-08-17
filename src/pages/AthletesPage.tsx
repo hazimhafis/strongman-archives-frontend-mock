@@ -20,6 +20,8 @@ type SortKey =
   | "firstName"
   | "country"
   | "activeYears"
+  | "height"
+  | "weight"
   | "intlContests"
   | "intlWins"
   | "worldApps"
@@ -69,6 +71,12 @@ export function AthletesPage() {
 
     rows.sort((a, b) => {
       const direction = sortDir === "asc" ? 1 : -1
+      if (sortKey === "height") {
+        return (parseHeight(a.height) - parseHeight(b.height)) * direction
+      }
+      if (sortKey === "weight") {
+        return (parseWeight(a.weight) - parseWeight(b.weight)) * direction
+      }
       if (sortKey === "intlContests" || sortKey === "intlWins" || sortKey === "worldApps") {
         return ((a[sortKey] ?? -1) - (b[sortKey] ?? -1)) * direction
       }
@@ -225,12 +233,18 @@ export function AthletesPage() {
                   direction={sortDir}
                   onClick={() => toggleSort("activeYears")}
                 />
-                <th className="px-3 py-3 text-label text-muted-foreground">
-                  Height
-                </th>
-                <th className="px-3 py-3 text-label text-muted-foreground">
-                  Weight
-                </th>
+                <SortHead
+                  label="Height"
+                  active={sortKey === "height"}
+                  direction={sortDir}
+                  onClick={() => toggleSort("height")}
+                />
+                <SortHead
+                  label="Weight"
+                  active={sortKey === "weight"}
+                  direction={sortDir}
+                  onClick={() => toggleSort("weight")}
+                />
                 <SortHead
                   label="Int'l Contests"
                   active={sortKey === "intlContests"}
@@ -335,6 +349,18 @@ export function AthletesPage() {
       </div>
     </section>
   )
+}
+
+function parseHeight(value: string) {
+  const match = value.match(/^(\d+)'(\d+)/)
+  if (!match) return -1
+  return Number(match[1]) * 12 + Number(match[2])
+}
+
+function parseWeight(value: string) {
+  const match = value.match(/^(\d+)/)
+  if (!match) return -1
+  return Number(match[1])
 }
 
 function SortHead({
