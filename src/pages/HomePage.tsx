@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom"
 
-import { AthleteHoverAccordion } from "@/components/AthleteHoverAccordion"
+import { AthleteCarousel } from "@/components/AthleteCard"
 import { Container } from "@/components/Container"
 import { ContestTable } from "@/components/ContestTable"
 import { SectionHeading } from "@/components/SectionHeading"
@@ -15,7 +15,7 @@ import {
 export function HomePage() {
   const latestContests = getLatestCompetitions(10)
   const upcomingContests = getUpcomingContests(10)
-  const popularAthletes = getPopularAthletes(5)
+  const popularAthletes = getPopularAthletes(16)
 
   return (
     <div>
@@ -56,7 +56,7 @@ export function HomePage() {
               </Button>
             }
           />
-          <AthleteHoverAccordion athletes={popularAthletes} />
+          <AthleteCarousel athletes={popularAthletes} />
         </Container>
       </section>
     </div>
